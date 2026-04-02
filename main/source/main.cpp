@@ -12,7 +12,7 @@
 #include <lua.hpp>
 #include <lauxlib.h>
 
-//#include <audiogc.hpp>
+#include <audiogc.hpp>
 
 #include <vector>
 #include <algorithm>
@@ -64,6 +64,107 @@ static bool controlledRedraw = false;
 static bool hasToShutdown = false;
 static lwpq_t redrawQueue;
 static bool runningOnDolphin = false;
+
+static audiogc::player* bgm = nullptr;
+
+//--- BGM player direct AESND (pas d'audiogc pour le BGM) ---
+#define BGM_BUFSIZE     (DSP_STREAMBUFFER_SIZE * 16) // ~18432 octets = ~96ms à 48kHz stéréo
+#define BGM_SAMPLERATE  48000
+#define BGM_NUM_BUFS    4
+
+static AESNDPB* bgmVoice = NULL;
+static u8* bgmBuf[BGM_NUM_BUFS] = {};
+static volatile int bgmPlayIdx = 0;
+static volatile int bgmFillIdx = 0;
+static volatile bool bgmPlaying = false;
+static FILE* bgmFile = NULL;
+static lwp_t bgmThread = LWP_THREAD_NULL;
+static lwpq_t bgmQueue;
+
+static void bgmFillBuffer(int idx) {
+    s32 rd = fread(bgmBuf[idx], 1, BGM_BUFSIZE, bgmFile);
+    if (rd < BGM_BUFSIZE) {
+        fseek(bgmFile, 0, SEEK_SET);
+        if (rd < (s32)BGM_BUFSIZE)
+            fread(bgmBuf[idx] + rd, 1, BGM_BUFSIZE - rd, bgmFile);
+    }
+    // Swap little-endian (Audacity) -> big-endian (PowerPC)
+    u16* samples = (u16*)bgmBuf[idx];
+    for (u32 i = 0; i < BGM_BUFSIZE / 2; i++) {
+        samples[i] = (samples[i] >> 8) | (samples[i] << 8);
+    }
+    DCFlushRange(bgmBuf[idx], BGM_BUFSIZE);
+}
+
+static void bgmCallback(AESNDPB* pb, u32 state) {
+    if (state == VOICE_STATE_STREAM) {
+        AESND_SetVoiceBuffer(pb, bgmBuf[bgmPlayIdx], BGM_BUFSIZE);
+        bgmPlayIdx = (bgmPlayIdx + 1) % BGM_NUM_BUFS;
+        LWP_ThreadSignal(bgmQueue);
+    }
+}
+
+static void* bgmThreadFunc(void* arg) {
+    while (bgmPlaying) {
+        // Remplit tous les buffers disponibles en avance
+        while (((bgmFillIdx + 1) % BGM_NUM_BUFS) != bgmPlayIdx) {
+            bgmFillBuffer(bgmFillIdx);
+            bgmFillIdx = (bgmFillIdx + 1) % BGM_NUM_BUFS;
+        }
+        LWP_ThreadSleep(bgmQueue);
+    }
+    return NULL;
+}
+
+void initAudio() {
+    bgmFile = fopen("/rvloader/themes/main/assets/audio/BGM.pcm", "rb");
+    if (!bgmFile) {
+        printf("BGM: Could not open BGM.pcm\n");
+        return;
+    }
+
+    for (int i = 0; i < BGM_NUM_BUFS; i++) {
+        bgmBuf[i] = (u8*)memalign(32, BGM_BUFSIZE);
+        if (!bgmBuf[i]) {
+            printf("BGM: Out of memory\n");
+            fclose(bgmFile);
+            bgmFile = NULL;
+            return;
+        }
+    }
+
+    // Pré-remplir tous les buffers
+    for (int i = 0; i < BGM_NUM_BUFS; i++) {
+        bgmFillBuffer(i);
+    }
+    bgmPlayIdx = 0;
+    bgmFillIdx = 0;
+
+    LWP_InitQueue(&bgmQueue);
+
+    bgmVoice = AESND_AllocateVoice(bgmCallback);
+    if (!bgmVoice) {
+        printf("BGM: Could not allocate voice\n");
+        fclose(bgmFile);
+        bgmFile = NULL;
+        return;
+    }
+
+    bgmPlaying = true;
+    // Thread basse priorité (120 > 64 main) pour ne jamais bloquer le rendu
+    LWP_CreateThread(&bgmThread, bgmThreadFunc, NULL, NULL, 0x4000, 120);
+
+    AESND_SetVoiceFormat(bgmVoice, VOICE_STEREO16);
+    AESND_SetVoiceFrequency(bgmVoice, BGM_SAMPLERATE);
+    AESND_SetVoiceVolume(bgmVoice, 0x60, 0x60);
+    AESND_SetVoiceStream(bgmVoice, true);
+    AESND_SetVoiceBuffer(bgmVoice, bgmBuf[0], BGM_BUFSIZE);
+    bgmPlayIdx = 1;
+    AESND_SetVoiceStop(bgmVoice, false);
+
+    printf("BGM Initialized (direct AESND, 4-buf ring, PCM stream).\n");
+}
+
 
 extern "C" {
     extern void udelay(int us);
@@ -253,6 +354,10 @@ int main(int argc, char **argv) {
         }
     }
 
+    Gfx::startDrawing();
+     font.printf(32, 32, "LOADING ...");
+      Gfx::endDrawing();
+                
    /* {
         const int textHeight = 32;
         int textCenterOffsetY = (textHeight + font.getCharBearingY('O')) / 2 - font.getSize();
@@ -335,8 +440,13 @@ int main(int argc, char **argv) {
     if (mainConfig.getValue("LastView", &lastView)) {
         mainWindow.switchToElement(lastView);
     }
-
-    //initAudio();
+    Gfx::startDrawing();
+  
+    font.printf(300, 30, "MEM1: %.3f / %.3f", (float)SYS_GetArena1Size() / 1048576.0f, mem1Max);
+    font.printf(300, 50, "MEM2: %.3f / %.3f", (float)SYS_GetArena2Size() / 1048576.0f, mem2Max);
+    font.printf(300, 80, "PADS: %u", connectedPads);
+    Gfx::endDrawing();
+    initAudio();
  
     while(1) {
         if (controlledRedraw) {
@@ -362,9 +472,9 @@ int main(int argc, char **argv) {
 
         Gfx::startDrawing();
         mainWindow.draw(true);
-      // font.printf(300, 30, "MEM1: %.3f / %.3f", (float)SYS_GetArena1Size() / 1048576.0f, mem1Max);
-      //  font.printf(300, 50, "MEM2: %.3f / %.3f", (float)SYS_GetArena2Size() / 1048576.0f, mem2Max);
-       // font.printf(300, 80, "PADS: %u", connectedPads);
+       font.printf(300, 100, "MEM1: %.3f / %.3f", (float)SYS_GetArena1Size() / 1048576.0f, mem1Max);
+        font.printf(300, 130, "MEM2: %.3f / %.3f", (float)SYS_GetArena2Size() / 1048576.0f, mem2Max);
+        font.printf(300, 150, "PADS: %u", connectedPads);
         Gfx::endDrawing();
         //VIDEO_WaitVSync();
 
