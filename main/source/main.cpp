@@ -12,6 +12,8 @@
 #include <lua.hpp>
 #include <lauxlib.h>
 
+//#include <audiogc.hpp>
+
 #include <vector>
 #include <algorithm>
 #include <clocale>
@@ -72,6 +74,7 @@ bool checkRVL();
 void lockSIMutex() {
     LWP_MutexLock(SIMutex);
 }
+
 
 void unlockSIMutex() {
     LWP_MutexUnlock(SIMutex);
@@ -250,7 +253,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    {
+   /* {
         const int textHeight = 32;
         int textCenterOffsetY = (textHeight + font.getCharBearingY('O')) / 2 - font.getSize();
         Vector2 pos = (screenSize - RVLlogo.getDimensions()) / 2;
@@ -264,6 +267,9 @@ int main(int argc, char **argv) {
         Gfx::endDrawing();
     }
     printf("Initialization complete\n");
+*/
+    
+  //  AESND_Init();
 
     HUD::init();
 
@@ -330,6 +336,8 @@ int main(int argc, char **argv) {
         mainWindow.switchToElement(lastView);
     }
 
+    //initAudio();
+ 
     while(1) {
         if (controlledRedraw) {
             LWP_ThreadSleep(redrawQueue);
@@ -354,9 +362,9 @@ int main(int argc, char **argv) {
 
         Gfx::startDrawing();
         mainWindow.draw(true);
-        //font.printf(300, 10, "MEM1: %.3f / %.3f", (float)SYS_GetArena1Size() / 1048576.0f, mem1Max);
-        //font.printf(300, 30, "MEM2: %.3f / %.3f", (float)SYS_GetArena2Size() / 1048576.0f, mem2Max);
-        //font.printf(300, 10, "PADS: %u", connectedPads);
+      // font.printf(300, 30, "MEM1: %.3f / %.3f", (float)SYS_GetArena1Size() / 1048576.0f, mem1Max);
+      //  font.printf(300, 50, "MEM2: %.3f / %.3f", (float)SYS_GetArena2Size() / 1048576.0f, mem2Max);
+       // font.printf(300, 80, "PADS: %u", connectedPads);
         Gfx::endDrawing();
         //VIDEO_WaitVSync();
 

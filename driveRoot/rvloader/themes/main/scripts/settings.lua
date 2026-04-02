@@ -28,8 +28,8 @@ end
 
 function aboutSettings:draw(onFocus)
     self.menuSystem:start(onFocus)
-    self.menuSystem:printLine(string.format("RVLoader v%.1f", Sys.getVersion()))
-    self.menuSystem:printLine("Developed by Aurelio")
+    self.menuSystem:printLine(string.format("RVLoader-LMV v%.1f", Sys.getVersion()))
+    self.menuSystem:printLine("Developed by Aurelio and Lamondille")
     self.menuSystem:printLine("Powered by LUA")
     Gfx.drawImage(self.luaLogo_Img, self.menuSystem.sideMargin, (self.menuSystem.lineI - 1) * self.menuSystem.lineHeight)
     self.menuSystem:finish()
@@ -82,24 +82,24 @@ function init()
     menuSystem.selectionBGColor = Gfx.RGBA8(0x1F, 0x22, 0x27, 0xFF)
 
     --Initialize settingMenus
-    table.insert(settingMenus.names, "Loader")
-    table.insert(settingMenus.menuClasses, loaderSettings)
-    table.insert(settingMenus.names, "Controller")
-    table.insert(settingMenus.menuClasses, controllerSettings)
+    --table.insert(settingMenus.names, "Loader")
+    --table.insert(settingMenus.menuClasses, loaderSettings)
+   -- table.insert(settingMenus.names, "Controller")
+    --table.insert(settingMenus.menuClasses, controllerSettings)
 
-    if PMS2.isConnected() then
-        table.insert(settingMenus.names, "Power")
-        table.insert(settingMenus.menuClasses, powerSettings)
-    end
+    --if PMS2.isConnected() then
+    --    table.insert(settingMenus.names, "Power")
+    --   table.insert(settingMenus.menuClasses, powerSettings)
+    -- end
 
-    if UAMP.isConnected() then
-        table.insert(settingMenus.names, "Audio")
-        table.insert(settingMenus.menuClasses, audioSettings)
-    end
+    -- if UAMP.isConnected() then
+     --   table.insert(settingMenus.names, "Audio")
+    --    table.insert(settingMenus.menuClasses, audioSettings)
+    -- end
 
 
-    table.insert(settingMenus.names, "Status")
-    table.insert(settingMenus.menuClasses, statusSettings)
+   -- table.insert(settingMenus.names, "Status")
+    --table.insert(settingMenus.menuClasses, statusSettings)
 
     table.insert(settingMenus.names, "About")
     table.insert(settingMenus.menuClasses, aboutSettings)

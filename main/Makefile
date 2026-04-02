@@ -28,6 +28,7 @@ DATA		:=	data
 TEXTURES	:=	textures
 INCLUDES	:=	include include/titles include/gui \
 				include/peripherals ../common/include
+				
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -43,7 +44,9 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map,--section-start,.init=0x813300
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
 
-LIBS	:=	-llua -laudiogc -lwiiuse -laesnd -lbte -lfat -lGUI -logc -lm -lfreetype -lpng -lz -lbz2 -lmxml
+#LIBS	:=	-llua -laudiogc -lwiiuse -laesnd -lbte -lfat -lGUI -logc -lm -lfreetype -lpng -lz -lbz2 -lmxml
+
+LIBS    := -llua -laudiogc -lwiiuse -laesnd -lbte -lfat -lGUI -logc -lfreetype -lbrotlidec -lbrotlicommon -lpng -lz -lbz2 -lmxml -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

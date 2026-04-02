@@ -30,7 +30,7 @@
 typedef void (*entrypoint) (void);
 
 extern "C" {
-    extern void __exception_closeall();
+  //  extern void //__exception_closeall();
     extern void VIDEO_SetFramebuffer(void *);
     extern void udelay(int us);
 }
@@ -319,7 +319,7 @@ void bootDOL(const char* path, const char* args, bool patchMX) {
 
     SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
     _CPU_ISR_Disable(level);
-    __exception_closeall();
+    //__exception_closeall();
     hbboot_ep();
     _CPU_ISR_Restore(level);
 }
@@ -374,7 +374,7 @@ void bootGCGame(NIN_CFG cfg) {
 
     SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
     _CPU_ISR_Disable(level);
-    __exception_closeall();
+    //__exception_closeall();
     hbboot_ep();
     _CPU_ISR_Restore(level);
 }
@@ -461,7 +461,7 @@ void bootDiscLoader(bool hideLog) {
     //Removed due to Hiidra having control of the whole system already
     //SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
     _CPU_ISR_Disable(level);
-    __exception_closeall();
+    //__exception_closeall();
     hbboot_ep();
     _CPU_ISR_Restore(level);
 }

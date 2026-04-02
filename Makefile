@@ -58,13 +58,33 @@ rvlbooter: main
 	@echo " "
 	$(MAKE) -C rvlbooter
 
+#copy: main
+#	@echo " "
+#	@echo "Copying build to external drive"
+#	@echo " "
+#	@cp main/boot.dol /media/aurelio/SANDISK/apps/rvloader
+#	@udisksctl unmount -b /dev/sdb
+#	@udisksctl power-off -b /dev/sdb
+
+
 copy: main
 	@echo " "
-	@echo "Copying build to external drive"
+	@echo "Recherche de la clé WII..."
 	@echo " "
-	@cp main/boot.dol /media/aurelio/SANDISK/apps/rvloader
-	@udisksctl unmount -b /dev/sdb
-	@udisksctl power-off -b /dev/sdb
+	$(eval DRIVE := $(shell wmic logicaldisk get deviceid,volumename | grep WII | awk '{print $$1}'))
+	@if [ -z "$(DRIVE)" ]; then \
+		echo "[ERREUR] Clé WII introuvable !"; \
+		echo "Voici la liste de vos lecteurs détectés :"; \
+		wmic logicaldisk get deviceid,volumename; \
+		exit 1; \
+	fi; \
+	echo "[OK] Lecteur détecté : $(DRIVE)"; \
+	echo "Copie du contenu de driveroot..."; \
+	cp -ru driveroot/* $(DRIVE)/; \
+	echo "Installation de main.dol vers /apps/RVLoader/boot.dol..."; \
+	mkdir -p $(DRIVE)/apps/RVLoader; \
+	cp main/main.dol $(DRIVE)/apps/RVLoader/boot.dol; \
+	echo "--- TERMINE AVEC SUCCES ---"
 
 clean:
 	@echo " "

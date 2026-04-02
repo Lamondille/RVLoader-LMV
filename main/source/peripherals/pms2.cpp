@@ -5,7 +5,7 @@
 #include <math.h>
 #include <ogc/lwp_watchdog.h>
 #include <ogc/machine/processor.h>
-#include <ogc/lwp_threads.h>
+#include <ogc/lwp.h>
 #include "i2c.h"
 #include "pms2.h"
 #include "main.h"
