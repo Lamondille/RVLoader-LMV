@@ -116,8 +116,9 @@ static void* bgmThreadFunc(void* arg) {
     return NULL;
 }
 
-void initAudio() {
-    bgmFile = fopen("/rvloader/themes/main/assets/audio/BGM.pcm", "rb");
+void initAudio(const std::string& themePath) {
+    std::string bgmPath = themePath + "/assets/audio/BGM.pcm";
+    bgmFile = fopen(bgmPath.c_str(), "rb");
     if (!bgmFile) {
         printf("BGM: Could not open BGM.pcm\n");
         return;
@@ -446,7 +447,7 @@ int main(int argc, char **argv) {
     font.printf(300, 50, "MEM2: %.3f / %.3f", (float)SYS_GetArena2Size() / 1048576.0f, mem2Max);
     font.printf(300, 80, "PADS: %u", connectedPads);
     Gfx::endDrawing();
-    initAudio();
+    initAudio(themePath);
  
     while(1) {
         if (controlledRedraw) {

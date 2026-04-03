@@ -152,6 +152,8 @@ function handleMessage(msg)
 end
 
 function handleInputs(onFocus)
+    if not onFocus then return end
+
     local down = Pad.gendown(0)
 
     if not handlingLeftColumn then

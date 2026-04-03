@@ -10,6 +10,8 @@ SUBPROJECTS := dolbooter bootloader installer discloader codehandler libGUI main
 all: rvlbooter
 forced: clean all
 
+
+
 dolbooter:
 	@echo " "
 	@echo "Building RVLoader dolbooter"
@@ -98,3 +100,28 @@ clean:
 	$(MAKE) -C libGUI clean
 	$(MAKE) -C main clean
 	$(MAKE) -C rvlbooter clean
+	rm -f $(CURDIR)/tools/wimgt/*.tpl
+
+.PHONY: convert
+
+# --- Chemins des outils ---
+WIMGT   := ./tools/wimgt/wimgt.exe
+IN_DIR  := ./tools/wimgt/in
+OUT_DIR  := ./tools/wimgt/out
+.PHONY: convert
+
+convert:
+	@echo "--- Conversion des PNG en TPL ---"
+	@# Vérifier si l'outil existe
+	@if [ ! -f $(WIMGT) ]; then echo "Erreur: wimgt.exe introuvable dans $(WIMGT)"; exit 1; fi
+	@chmod +x $(WIMGT)
+	
+	@echo "Conversion du fond (boot_bg)..."
+	@# On transforme boot_bg.png en boot_bg.tpl
+	$(WIMGT) COPY $(IN_DIR)/boot_bg.png $(OUT_DIR)/boot_bg.tpl --transform CMPR --overwrite
+	
+	@echo "Conversion de la roue (loading_wheel)..."
+	@# On transforme loading_wheel.png en loading_wheel.tpl
+	$(WIMGT) COPY $(IN_DIR)/loading_wheel.png $(OUT_DIR)/loading_wheel.tpl --transform RGBA8 --overwrite
+	
+	@echo "--- Terminé ! Les fichiers .tpl sont dans $(OUT_DIR) ---"

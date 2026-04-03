@@ -3,8 +3,8 @@
 > A fork of [RVLoader](https://github.com/Aurelio92/RVLoader) adding animated splash screens and multi-theme UI support — each theme brings its own look, music, and sound effects inspired by iconic Nintendo interfaces.
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Based on RVLoader](https://img.shields.io/badge/Based%20on-RVLoader-orange.svg)](https://github.com/Aurelio92/RVLoader)
-[![Platform: Wii](https://img.shields.io/badge/Platform-Wii-lightgrey.svg)]()
+[![Based on RVLoader](https://img.shields.io/badge/Based%20on-RVLoader-green.svg)](https://github.com/Aurelio92/RVLoader)
+[![Platform: Wii](https://img.shields.io/badge/Platform-Wii-red.svg)]()
 
 ---
 
@@ -76,7 +76,7 @@ Themes live in `/rvloader/themes/<theme_name>/` on your SD/USB card.
 
 ## 🚀 Installation
 
-1. Build RVLoader-Nexus (see [Build](#build)) or grab a prebuilt release.
+1. Build RVLoader-LMV (see [Build](#build)) or grab a prebuilt release.
 2. Copy `driveRoot/` contents to the root of your SD/USB.
 3. Add your music/sound files (see structure above).
 4. Launch via the Homebrew Channel.
@@ -111,8 +111,51 @@ Output: `driveRoot/apps/RVLoader/boot.dol`
 
 ---
 
-## 🤝 Credits
+## 🎵 Background music — required audio format
 
+The BGM system streams raw **PCM** data directly via AESND with zero CPU decoding overhead.  
+The file must match these exact parameters:
+
+| Parameter | Value |
+|---|---|
+| Format | RAW (no header) |
+| Encoding | Signed 16-bit PCM |
+| Sample rate | 48 000 Hz |
+| Channels | Stereo (2 channels) |
+| Endianness | Little-endian (Audacity default) |
+| File name | `BGM.pcm` |
+| Location | `<theme>/assets/audio/BGM.pcm` |
+
+> The little-endian → big-endian byte swap is handled automatically by the loader.
+
+### Using Audacity
+
+1. Open your source audio file (MP3, OGG, WAV…)
+2. Set the **project sample rate** to **48000** in the bottom-left corner
+3. Keep the track in **stereo** (or use **Tracks → Mix → Mix Stereo Down to Mono** if needed)
+4. **File → Export Audio…**
+5. Export settings:
+   - **Format**: `Other uncompressed files`
+   - **Header**: `RAW (header-less)`
+   - **Encoding**: `Signed 16-bit PCM`
+6. Name the file **`BGM.pcm`**
+7. Place it in `/rvloader/themes/<theme_name>/assets/audio/` on your USB drive
+
+
+![alt text](image.png)
+
+### Using ffmpeg (alternative)
+
+```bash
+ffmpeg -i source.ogg -f s16le -ar 48000 -ac 2 BGM.pcm
+```
+
+> `-f s16le` = Signed 16-bit Little-Endian, `-ac 2` = stereo, `-ar 48000` = 48 kHz
+
+---
+
+
+## 🤝 Credits
 - **[Aurelio92](https://github.com/Aurelio92)** and all RVLoader contributors — original loader, all core functionality
 - Theme Lua scripts and splash screen system — RVLoader-Nexus contributors
 
